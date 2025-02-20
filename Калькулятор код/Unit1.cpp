@@ -6,7 +6,11 @@
 #include <string.h>
 #include <vector>
 #include <sstream>
+#include <cctype>
+#include <algorithm>
+#include <stdexcept>
 #include <stack>
+#include <iomanip>
 #include <queue>
 #pragma hdrstop
 
@@ -26,7 +30,23 @@ __fastcall TForm1::TForm1(TComponent* Owner)
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::number_click(TObject *Sender)
-{
+{ TButton *button = dynamic_cast<TButton*>(Sender);
+        UnicodeString number = button->Caption;
+
+        if (Label1->Caption == "0" && number != ",") {
+            Label1->Caption = number;
+        } else {
+            if (number == ",") {
+                // Проверяем, есть ли уже запятая в текущем числе
+                if (Pos(",", Label1->Caption) == 0) {
+                    Label1->Caption += number;
+                }
+            } else {
+                Label1->Caption += number;
+            }
+		}
+
+ /*
 //create method for edding numbers
 	 TButton *button = dynamic_cast<TButton*>(Sender);
 
@@ -41,7 +61,7 @@ void __fastcall TForm1::number_click(TObject *Sender)
     if (full.IsEmpty() || full[full.Length()] == '+' || full[full.Length()] == '-' || full[full.Length()] == '*' || full[full.Length()] == '/') {
         full += button->Caption; // Добавляем число в полное выражение
     }
-
+	   */
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::btn_delClick(TObject *Sender)
@@ -69,18 +89,26 @@ void __fastcall TForm1::btn_sumClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::math_action(char action)
-{ // Добавляем операцию только если последним не является знак операции
+{ /*// Добавляем операцию только если последним не является знак операции
     if (!full.IsEmpty() && (full[full.Length()] != '+' && full[full.Length()] != '-' && full[full.Length()] != '*' && full[full.Length()] != '/')) {
         full += action; // добавляем операцию
     } else if (full.IsEmpty()) {
         full = Label1->Caption; // сохраняем первое число
         full += action; // добавляем операцию
     }
-    Label1->Caption = full; // Обновляем отображение
+	Label1->Caption = full; // Обновляем отображение */
+    UnicodeString currentText = Label1->Caption;
+    if (currentText.Length() > 0 &&
+        currentText[currentText.Length() - 1] != '+' &&
+        currentText[currentText.Length() - 1] != '-' &&
+        currentText[currentText.Length() - 1] != '*' &&
+        currentText[currentText.Length() - 1] != '/') {
+        Label1->Caption += action;
+    }
 }
 
 void __fastcall TForm1::btn_equalClick(TObject *Sender)
-{
+{ /*
    if (full.IsEmpty()) {
         return;
     }
@@ -90,7 +118,32 @@ void __fastcall TForm1::btn_equalClick(TObject *Sender)
     full += "=" + FloatToStr(result);
     Label1->Caption = full;
 
-	full = "";
+	full = "";   */
+	UnicodeString expressionUnicode = Label1->Caption;
+    AnsiString ansiExpression = AnsiString(expressionUnicode);
+    std::string expression = ansiExpression.c_str();
+
+    try {
+        float result = evaluateExpression(expressionUnicode);
+
+        // Преобразуем результат в строку
+        std::ostringstream out;
+        out << std::fixed << result; // Используем fixed для отображения числа с плавающей запятой
+
+        std::string resultStr = out.str();
+
+        // Убираем лишние нули
+        if (resultStr.find('.') != std::string::npos) {
+            resultStr.erase(resultStr.find_last_not_of('0') + 1, std::string::npos); // Убираем лишние нули
+            if (resultStr.back() == '.') {
+                resultStr.pop_back(); // Убираем точку, если она осталась
+            }
+        }
+
+        Label1->Caption = expressionUnicode + "=" + resultStr.c_str();
+    } catch (const runtime_error& error) {
+        Label1->Caption = error.what();
+    }
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::btn_delete_allClick(TObject *Sender)
@@ -120,44 +173,58 @@ float TForm1::applyOp(float a, float b, char op) {
 
 // Функция для вычисления выражения
 float TForm1::evaluateExpression(const UnicodeString& expression) {
-stack<float> values;
-	stack<char> ops;
-	AnsiString ansiExpression = AnsiString(expression);
-	stringstream ss(ansiExpression.c_str());
-	float num;
-	char op;
+    stack<float> values;
+    stack<char> ops;
 
-	while (ss >> num) {
-		values.push(num);
-		if (ss >> op) {
+    // Преобразуем UnicodeString в std::string
+    AnsiString ansiExpression = AnsiString(expression);
+    string cleanedExpression = ansiExpression.c_str();
+
+    // Удаляем пробелы из выражения
+    cleanedExpression.erase(remove_if(cleanedExpression.begin(), cleanedExpression.end(), ::isspace), cleanedExpression.end());
+
+    size_t pos = 0;
+    while (pos < cleanedExpression.length()) {
+        if (isdigit(cleanedExpression[pos]) || cleanedExpression[pos] == ',' ||
+            (cleanedExpression[pos] == '-' && pos + 1 < cleanedExpression.length() &&
+             (isdigit(cleanedExpression[pos + 1]) || cleanedExpression[pos + 1] == ','))) {
+            // Это начало числа
+            size_t end = pos + 1;
+            while (end < cleanedExpression.length() &&
+                   (isdigit(cleanedExpression[end]) || cleanedExpression[end] == ',' || cleanedExpression[end] == '.')) {
+                end++;
+            }
+            string numStr = cleanedExpression.substr(pos, end - pos);
+            replace(numStr.begin(), numStr.end(), ',', '.'); // Заменяем запятую на точку
+            try {
+                values.push(stof(numStr));
+            } catch (const invalid_argument& e) {
+                throw runtime_error("Invalid number: " + numStr);
+            }
+            pos = end;
+        } else if (cleanedExpression[pos] == '+' || cleanedExpression[pos] == '-' ||
+                   cleanedExpression[pos] == '*' || cleanedExpression[pos] == '/') {
+            // Это оператор
+            char op = cleanedExpression[pos];
             while (!ops.empty() && getPriority(ops.top()) >= getPriority(op)) {
                 float val2 = values.top(); values.pop();
                 float val1 = values.top(); values.pop();
-				char opTop = ops.top(); ops.pop();
+                char opTop = ops.top(); ops.pop();
                 values.push(applyOp(val1, val2, opTop));
             }
             ops.push(op);
+            pos++;
+        } else {
+            throw runtime_error("Invalid character: " + string(1, cleanedExpression[pos]));
         }
-	}
+    }
 
     while (!ops.empty()) {
-		float val2 = values.top(); values.pop();
-		float val1 = values.top(); values.pop();
-		char opTop = ops.top(); ops.pop();
-		values.push(applyOp(val1, val2, opTop));
-	}
+        float val2 = values.top(); values.pop();
+        float val1 = values.top(); values.pop();
+        char opTop = ops.top(); ops.pop();
+        values.push(applyOp(val1, val2, opTop));
+    }
 
-	return values.top();
+    return values.top();
 }
-
-void __fastcall TForm1::btn_dotsClick(TObject *Sender)
-{
-   UnicodeString text = Label1->Caption;
-    if (Pos(",", text) == 0) {
-        Label1->Caption = text + ",";
-		full += ",";
-	}
-
-}
-//---------------------------------------------------------------------------
-

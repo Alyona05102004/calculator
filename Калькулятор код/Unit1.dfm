@@ -14,13 +14,13 @@ object Form1: TForm1
   object Label1: TLabel
     Left = 16
     Top = 32
-    Width = 22
-    Height = 54
+    Width = 25
+    Height = 37
     BiDiMode = bdLeftToRight
     Caption = '0'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
-    Font.Height = -40
+    Font.Height = -27
     Font.Name = 'Segoe UI'
     Font.Style = []
     ParentBiDiMode = False
@@ -189,7 +189,7 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
     TabOrder = 10
-    OnClick = btn_dotsClick
+    OnClick = number_click
   end
   object btn_equal: TButton
     Left = 229

@@ -39,7 +39,6 @@ __published:	// IDE-managed Components
 	void __fastcall math_action(char action);
 	void __fastcall btn_equalClick(TObject *Sender);
 	void __fastcall btn_delete_allClick(TObject *Sender);
-	void __fastcall btn_dotsClick(TObject *Sender);
 private:	// User declarations
 		float TForm1::evaluateExpression(const UnicodeString& expression);
 		int TForm1::getPriority(char op);
