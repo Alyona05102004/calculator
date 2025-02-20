@@ -6,6 +6,8 @@
 #include <string.h>
 #include <vector>
 #include <sstream>
+#include <stack>
+#include <queue>
 #pragma hdrstop
 
 #include "Unit1.h"
@@ -97,44 +99,55 @@ void __fastcall TForm1::btn_delete_allClick(TObject *Sender)
     full = "";
 }
 //---------------------------------------------------------------------------
-
+//Функция для определения приоритета выполнения операций
+int TForm1::getPriority(char op) {
+    if (op == '*' || op == '/') return 2;
+    if (op == '+' || op == '-') return 1;
+    return 0;
+}
+//функция для вычисления результата операций
+float TForm1::applyOp(float a, float b, char op) {
+    switch (op) {
+    case '+': return a + b;
+    case '-': return a - b;
+    case '*': return a * b;
+    case '/':
+		if (b == 0) throw runtime_error("Division by zero");
+        return a / b;
+    default: return 0; // Обработка неизвестной операции
+    }
+}
 
 // Функция для вычисления выражения
 float TForm1::evaluateExpression(const UnicodeString& expression) {
-vector<float> numbers;
-    vector<char> operations;
-    AnsiString ansiExpression = AnsiString(expression);
-    stringstream ss(ansiExpression.c_str());
-    float number;
-    char operation;
+stack<float> values;
+	stack<char> ops;
+	AnsiString ansiExpression = AnsiString(expression);
+	stringstream ss(ansiExpression.c_str());
+	float num;
+	char op;
 
-    // Чтение чисел и операций
-    while (ss >> number) {
-        numbers.push_back(number);
-        if (ss >> operation) {
-            operations.push_back(operation);
-        }
-    }
-
-    // Выполнение операций
-    for (size_t i = 0; i < operations.size(); ++i) {
-        if (operations[i] == '+') {
-            numbers[i + 1] = numbers[i] + numbers[i + 1];
-        } else if (operations[i] == '-') {
-            numbers[i + 1] = numbers[i] - numbers[i + 1];
-        } else if (operations[i] == '*') {
-            numbers[i + 1] = numbers[i] * numbers[i + 1];
-        } else if (operations[i] == '/') {
-            if (numbers[i + 1] != 0) {
-                numbers[i + 1] = numbers[i] / numbers[i + 1];
-            } else {
-                ShowMessage("На 0 делить нельзя!");
-                return 0;
+	while (ss >> num) {
+		values.push(num);
+		if (ss >> op) {
+            while (!ops.empty() && getPriority(ops.top()) >= getPriority(op)) {
+                float val2 = values.top(); values.pop();
+                float val1 = values.top(); values.pop();
+				char opTop = ops.top(); ops.pop();
+                values.push(applyOp(val1, val2, opTop));
             }
+            ops.push(op);
         }
-    }
+	}
 
-    return numbers.back(); // Возвращаем последний результат
+    while (!ops.empty()) {
+		float val2 = values.top(); values.pop();
+		float val1 = values.top(); values.pop();
+		char opTop = ops.top(); ops.pop();
+		values.push(applyOp(val1, val2, opTop));
+	}
+
+	return values.top();
 }
 
 void __fastcall TForm1::btn_dotsClick(TObject *Sender)
@@ -142,8 +155,9 @@ void __fastcall TForm1::btn_dotsClick(TObject *Sender)
    UnicodeString text = Label1->Caption;
     if (Pos(",", text) == 0) {
         Label1->Caption = text + ",";
-        full += ",";
-    }
+		full += ",";
+	}
+
 }
 //---------------------------------------------------------------------------
 
