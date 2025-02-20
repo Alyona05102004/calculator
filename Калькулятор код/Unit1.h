@@ -41,6 +41,7 @@ __published:	// IDE-managed Components
 	void __fastcall btn_delete_allClick(TObject *Sender);
 	void __fastcall btn_dotsClick(TObject *Sender);
 private:	// User declarations
+        float TForm1::evaluateExpression(const UnicodeString& expression);
 public:		// User declarations
 	__fastcall TForm1(TComponent* Owner);
 };

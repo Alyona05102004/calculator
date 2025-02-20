@@ -61,21 +61,27 @@ void __fastcall TForm1::btn_sumClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::math_action(char action)
 {   if (user_action != ' ') {
-		// Если уже есть действие, обновляем полное выражение
-		full = full.SubString(1, full.Length() - 1); // Удаляем последний знак
+		full = full.SubString(1, full.Length() - 1);
 	}
 	first_num = StrToFloat(Label1->Caption);
 	user_action = action;
-	full += action; // добавляем к полному выражению
+	full += action;
 	Label1->Caption = full;
 }
+
 void __fastcall TForm1::btn_equalClick(TObject *Sender)
 {
 //ravno
 	if (user_action==' ') {
 		return;
 	}
-	UnicodeString second_num_str = full.SubString(full.Length() - 1, 1);
+    int last_operator_pos = full.LastDelimiter("+-*/");
+    if (last_operator_pos == 0) {
+        ShowMessage("Ошибка: некорректное выражение.");
+        return;
+    }
+
+ 	UnicodeString second_num_str = full.SubString(last_operator_pos + 1, full.Length() - last_operator_pos);
 	second_num = StrToFloat(second_num_str);
 	switch (user_action) {
 		case ('+'): res=first_num + second_num;
@@ -88,10 +94,13 @@ void __fastcall TForm1::btn_equalClick(TObject *Sender)
 			if (second_num!=0.0){
 			res=first_num / second_num;
 			}
-            else ShowMessage("На 0 делить нельзя!");
+			else {
+				ShowMessage("На 0 делить нельзя!");
+                return;
+			}
 			break;
 	}
-	full += Label1->Caption + "=" + FloatToStr(res);
+	full += "=" + FloatToStr(res);
 	Label1->Caption=full;
 }
 //---------------------------------------------------------------------------
