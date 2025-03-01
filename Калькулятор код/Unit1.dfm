@@ -14,13 +14,13 @@ object Form1: TForm1
   object Label1: TLabel
     Left = 16
     Top = 32
-    Width = 25
-    Height = 37
+    Width = 22
+    Height = 54
     BiDiMode = bdLeftToRight
     Caption = '0'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
-    Font.Height = -27
+    Font.Height = -40
     Font.Name = 'Segoe UI'
     Font.Style = []
     ParentBiDiMode = False
@@ -181,7 +181,7 @@ object Form1: TForm1
     Top = 391
     Width = 65
     Height = 65
-    Caption = '.'
+    Caption = ','
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -27
@@ -279,6 +279,7 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
     TabOrder = 16
+    OnClick = btn_backspaceClick
   end
   object btn_min: TButton
     Left = 16
@@ -293,6 +294,7 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
     TabOrder = 17
+    OnClick = btn_minClick
   end
   object btn_delete_all: TButton
     Left = 16

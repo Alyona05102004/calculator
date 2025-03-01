@@ -189,7 +189,7 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
     TabOrder = 10
-    OnClick = number_click
+    OnClick = btn_dotsClick
   end
   object btn_equal: TButton
     Left = 229

@@ -4,14 +4,7 @@
 #include <System.hpp>
 #include <string>
 #include <string.h>
-#include <vector>
-#include <sstream>
 #include <cctype>
-#include <algorithm>
-#include <stdexcept>
-#include <stack>
-#include <iomanip>
-#include <queue>
 #pragma hdrstop
 
 #include "Unit1.h"
@@ -19,10 +12,12 @@
 #pragma package(smart_init)
 #pragma resource "*.dfm"
 using namespace std;
-
 TForm1 *Form1;
-UnicodeString full = ""; //full expression
-
+float first_num=0.0;   //first number
+float second_num=0.0;  //second number
+char user_action=' ';   //mathematical action
+float res=0.0; //result
+String full = ""; //full expression
 //---------------------------------------------------------------------------
 __fastcall TForm1::TForm1(TComponent* Owner)
 	: TForm(Owner)
@@ -30,38 +25,15 @@ __fastcall TForm1::TForm1(TComponent* Owner)
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::number_click(TObject *Sender)
-{ TButton *button = dynamic_cast<TButton*>(Sender);
-        UnicodeString number = button->Caption;
-
-        if (Label1->Caption == "0" && number != ",") {
-            Label1->Caption = number;
-        } else {
-            if (number == ",") {
-                // Проверяем, есть ли уже запятая в текущем числе
-                if (Pos(",", Label1->Caption) == 0) {
-                    Label1->Caption += number;
-                }
-            } else {
-                Label1->Caption += number;
-            }
-		}
-
- /*
-//create method for edding numbers
-	 TButton *button = dynamic_cast<TButton*>(Sender);
-
-    // Если текущее значение равно "0", заменяем его на новое число
-    if (Label1->Caption == "0") {
-        Label1->Caption = button->Caption;
-    } else {
-        Label1->Caption += button->Caption; // Добавляем к текущему числу
-    }
-
-    // Добавляем число в полное выражение только если это не операция
-    if (full.IsEmpty() || full[full.Length()] == '+' || full[full.Length()] == '-' || full[full.Length()] == '*' || full[full.Length()] == '/') {
-        full += button->Caption; // Добавляем число в полное выражение
-    }
-	   */
+{	TButton *button = dynamic_cast<TButton*>(Sender);
+	if (Label1->Caption=="0") {
+		Label1->Caption=button->Caption;
+	}
+	else {
+        Label1->Caption+=button->Caption;
+	}
+	full += button->Caption;
+	Label1->Caption = full;
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::btn_delClick(TObject *Sender)
@@ -89,142 +61,251 @@ void __fastcall TForm1::btn_sumClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::math_action(char action)
-{ /*// Добавляем операцию только если последним не является знак операции
-    if (!full.IsEmpty() && (full[full.Length()] != '+' && full[full.Length()] != '-' && full[full.Length()] != '*' && full[full.Length()] != '/')) {
-        full += action; // добавляем операцию
-    } else if (full.IsEmpty()) {
-        full = Label1->Caption; // сохраняем первое число
-        full += action; // добавляем операцию
-    }
-	Label1->Caption = full; // Обновляем отображение */
-    UnicodeString currentText = Label1->Caption;
-    if (currentText.Length() > 0 &&
-        currentText[currentText.Length() - 1] != '+' &&
-        currentText[currentText.Length() - 1] != '-' &&
-        currentText[currentText.Length() - 1] != '*' &&
-        currentText[currentText.Length() - 1] != '/') {
-        Label1->Caption += action;
-    }
+{if (user_action != ' ') {
+		full = full.SubString(1, full.Length() - 1);
+	}
+	first_num = StrToFloat(Label1->Caption);
+	user_action = action;
+	full += action;
+	Label1->Caption = full;
 }
 
 void __fastcall TForm1::btn_equalClick(TObject *Sender)
-{ /*
-   if (full.IsEmpty()) {
-        return;
+{
+    // Проверяем, была ли вызвана функция MIN и не закрыта ли она
+    AnsiString str = Label1->Caption;
+    if (str.Pos("MIN(") > 0 && str[str.Length()] != ')') {
+        full += ")"; // Добавляем закрывающую скобку
+        Label1->Caption = full; // Обновляем отображение
     }
 
-
-    float result = evaluateExpression(full);
-    full += "=" + FloatToStr(result);
+    // Добавляем знак равенства в конец
+    full += "=";
     Label1->Caption = full;
+    int lastCh = full.Length();
 
-	full = "";   */
-	UnicodeString expressionUnicode = Label1->Caption;
-    AnsiString ansiExpression = AnsiString(expressionUnicode);
-    std::string expression = ansiExpression.c_str();
+    float val = 0.0, val_tmp = 0.0;
+    int step = 0;
+    float S = 0, P = 1;
+    int point_count = 0;
+    int sn_count = 0;
+    bool pl_min = true; // +;
+    bool mul_div = true; // *;
+    bool in_min_function = false; // Флаг для MIN функции
+    float min_value = FLT_MAX;
 
-    try {
-        float result = evaluateExpression(expressionUnicode);
+    for (int i = 1; i <= lastCh; i++) {
+        switch (full[i]) {
+            case '0': { val = val * 10 + 0; step++; sn_count = 0; break; }
+            case '1': { val = val * 10 + 1; step++; sn_count = 0; break; }
+            case '2': { val = val * 10 + 2; step++; sn_count = 0; break; }
+            case '3': { val = val * 10 + 3; step++; sn_count = 0; break; }
+            case '4': { val = val * 10 + 4; step++; sn_count = 0; break; }
+            case '5': { val = val * 10 + 5; step++; sn_count = 0; break; }
+            case '6': { val = val * 10 + 6; step++; sn_count = 0; break; }
+            case '7': { val = val * 10 + 7; step++; sn_count = 0; break; }
+            case '8': { val = val * 10 + 8; step++; sn_count = 0; break; }
+            case '9': { val = val * 10 + 9; step++; sn_count = 0; break; }
+            case ',': {
+                val_tmp = val;
+                val = 0;
+                step = 0;
+                point_count++;
+                sn_count = 0;
+                if (point_count > 1) {
+                    ShowMessage("2 точки");
+                    i = lastCh;
+                    break;
+                }
+                break;
+            }
 
-        // Преобразуем результат в строку
-        std::ostringstream out;
-        out << std::fixed << result; // Используем fixed для отображения числа с плавающей запятой
+            case '+': {
+                sn_count++;
+                if (sn_count > 1) { ShowMessage("2 знака"); i = lastCh; break; }
 
-        std::string resultStr = out.str();
+                if (point_count > 0) { val = val_tmp + val * pow(10, -step); }
+                step = 0; point_count = 0; val_tmp = 0;
+                if (mul_div == true) { P = P * val; }
+                else {
+                    if (abs(val) < 0.0000003) {
+                        ShowMessage("Деление на 0");
+                        i = lastCh;
+                        break;
+                    } else {
+                        P = P / val;
+                    }
+                }
+                val = 0;
+                if (pl_min == true) { S = S + P; }
+                else { S = S - P; }
+                pl_min = true; mul_div = true; P = 1;
+                break;
+            }
 
-        // Убираем лишние нули
-        if (resultStr.find('.') != std::string::npos) {
-            resultStr.erase(resultStr.find_last_not_of('0') + 1, std::string::npos); // Убираем лишние нули
-            if (resultStr.back() == '.') {
-                resultStr.pop_back(); // Убираем точку, если она осталась
+            case '-': {
+                sn_count++;
+                if (sn_count > 1) { ShowMessage("2 знака"); i = lastCh; break; }
+
+                if (point_count > 0) { val = val_tmp + val * pow(10, -step); }
+                step = 0; point_count = 0; val_tmp = 0;
+                if (mul_div == true) { P = P * val; }
+                else {
+                    if (abs(val) < 0.0000003) {
+                        ShowMessage("Деление на 0");
+                        i = lastCh;
+                        break;
+                    } else {
+                        P = P / val;
+                    }
+                }
+                val = 0;
+                if (pl_min == true) { S = S + P; }
+                else { S = S - P; }
+                pl_min = false; mul_div = true; P = 1;
+                break;
+            }
+
+            case '*': {
+                sn_count++;
+                if (sn_count > 1) { ShowMessage("2 знака"); i = lastCh; break; }
+
+                if (point_count > 0) { val = val_tmp + val * pow(10, -step); }
+                step = 0; point_count = 0; val_tmp = 0;
+                if (mul_div == true) { P = P * val; }
+                else {
+                    if (abs(val) < 0.0000003) {
+                        ShowMessage("Деление на 0");
+                        i = lastCh;
+                        break;
+                    } else {
+                        P = P / val;
+                    }
+                }
+                val = 0;
+                mul_div = true;
+                break;
+            }
+
+            case '/': {
+                sn_count++;
+                if (sn_count > 1) { ShowMessage("2 знака"); i = lastCh; break; }
+
+                if (point_count > 0) { val = val_tmp + val * pow(10, -step); }
+                step = 0; point_count = 0; val_tmp = 0;
+                if (mul_div == true) { P = P * val; }
+                else {
+                    if (abs(val) < 0.0000003) {
+                        ShowMessage("Деление на 0");
+                        i = lastCh;
+                        break;
+                    } else {
+                        P = P / val;
+                    }
+                }
+                val = 0;
+                mul_div = false;
+                break;
+            }
+
+            case 'M': { // Начало функции MIN
+                if (full.SubString(i, 3) == "MIN") {
+                    in_min_function = true;
+                    i += 2; // Пропускаем 'I' и 'N'
+                    continue;
+                }
+                break;
+            }
+
+            case ';': { // Конец аргумента MIN
+                if (in_min_function) {
+                    if (val < min_value) {
+                        min_value = val; // Обновляем минимальное значение
+                    }
+                    val = 0; // Сбрасываем val для следующего аргумента
+                    step = 0; // Сбрасываем шаг
+                    point_count = 0; // Сбрасываем счетчик точек
+                }
+                break;
+            }
+
+            case '=': {
+                if (in_min_function) {
+                    if (val < min_value) {
+                        min_value = val; // Проверяем последнее значение
+                    }
+                    full += FloatToStrF(min_value, ffGeneral, 5, 2);
+                    Label1->Caption = full; // Обновляем отображение
+                    return; // Выходим из функции
+                }
+
+                if (point_count > 0) { val = val_tmp + val * pow(10, -step); }
+                step = 0; point_count = 0; val_tmp = 0;
+                if (mul_div == true) { P = P * val; }
+                else {
+                    if (abs(val) < 0.0000003) {
+                        ShowMessage("Деление на 0");
+                        i = lastCh;
+                        break;
+                    } else {
+                        P = P / val;
+                    }
+                }
+                val = 0;
+                if (pl_min == true) { S = S + P; }
+                else { S = S - P; }
+                pl_min = true; mul_div = true; P = 1;
+                i = lastCh; // Завершаем цикл
+                break;
+            }
+
+            default: {
+                ShowMessage("Символ!!!");
+                i = lastCh;
+                break;
             }
         }
-
-        Label1->Caption = expressionUnicode + "=" + resultStr.c_str();
-    } catch (const runtime_error& error) {
-        Label1->Caption = error.what();
     }
+
+    if (full[lastCh] == '*' || full[lastCh] == '/') {
+        if (pl_min == true) { S = S + P; }
+        else { S = S - P; }
+    }
+
+    full += FloatToStrF(S, ffGeneral, 5, 2);
+    Label1->Caption = full; // Обновляем отображение
 }
+
+
 //---------------------------------------------------------------------------
 void __fastcall TForm1::btn_delete_allClick(TObject *Sender)
 {
+//delete all
 	Label1->Caption="0";
+	first_num=0.0;
+	second_num=0.0;
+	user_action=' ';
+	res=0.0;
     full = "";
 }
 //---------------------------------------------------------------------------
-//Функция для определения приоритета выполнения операций
-int TForm1::getPriority(char op) {
-    if (op == '*' || op == '/') return 2;
-    if (op == '+' || op == '-') return 1;
-    return 0;
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::btn_backspaceClick(TObject *Sender)
+{
+   if (full.Length() > 0) {
+	full = full.SubString(1, full.Length() - 1);
+    Label1->Caption = full;
+	}
 }
-//функция для вычисления результата операций
-float TForm1::applyOp(float a, float b, char op) {
-    switch (op) {
-    case '+': return a + b;
-    case '-': return a - b;
-    case '*': return a * b;
-    case '/':
-		if (b == 0) throw runtime_error("Division by zero");
-        return a / b;
-    default: return 0; // Обработка неизвестной операции
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::btn_minClick(TObject *Sender)
+{
+	if (Label1->Caption != "0") {
+        full = "MIN(" + Label1->Caption + ";";
+        Label1->Caption = full;
     }
 }
+//---------------------------------------------------------------------------
 
-// Функция для вычисления выражения
-float TForm1::evaluateExpression(const UnicodeString& expression) {
-    stack<float> values;
-    stack<char> ops;
-
-    // Преобразуем UnicodeString в std::string
-    AnsiString ansiExpression = AnsiString(expression);
-    string cleanedExpression = ansiExpression.c_str();
-
-    // Удаляем пробелы из выражения
-    cleanedExpression.erase(remove_if(cleanedExpression.begin(), cleanedExpression.end(), ::isspace), cleanedExpression.end());
-
-    size_t pos = 0;
-    while (pos < cleanedExpression.length()) {
-        if (isdigit(cleanedExpression[pos]) || cleanedExpression[pos] == ',' ||
-            (cleanedExpression[pos] == '-' && pos + 1 < cleanedExpression.length() &&
-             (isdigit(cleanedExpression[pos + 1]) || cleanedExpression[pos + 1] == ','))) {
-            // Это начало числа
-            size_t end = pos + 1;
-            while (end < cleanedExpression.length() &&
-                   (isdigit(cleanedExpression[end]) || cleanedExpression[end] == ',' || cleanedExpression[end] == '.')) {
-                end++;
-            }
-            string numStr = cleanedExpression.substr(pos, end - pos);
-            replace(numStr.begin(), numStr.end(), ',', '.'); // Заменяем запятую на точку
-            try {
-                values.push(stof(numStr));
-            } catch (const invalid_argument& e) {
-                throw runtime_error("Invalid number: " + numStr);
-            }
-            pos = end;
-        } else if (cleanedExpression[pos] == '+' || cleanedExpression[pos] == '-' ||
-                   cleanedExpression[pos] == '*' || cleanedExpression[pos] == '/') {
-            // Это оператор
-            char op = cleanedExpression[pos];
-            while (!ops.empty() && getPriority(ops.top()) >= getPriority(op)) {
-                float val2 = values.top(); values.pop();
-                float val1 = values.top(); values.pop();
-                char opTop = ops.top(); ops.pop();
-                values.push(applyOp(val1, val2, opTop));
-            }
-            ops.push(op);
-            pos++;
-        } else {
-            throw runtime_error("Invalid character: " + string(1, cleanedExpression[pos]));
-        }
-    }
-
-    while (!ops.empty()) {
-        float val2 = values.top(); values.pop();
-        float val1 = values.top(); values.pop();
-        char opTop = ops.top(); ops.pop();
-        values.push(applyOp(val1, val2, opTop));
-    }
-
-    return values.top();
-}
