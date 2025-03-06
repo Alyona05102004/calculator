@@ -5,6 +5,7 @@
 #include <string>
 #include <string.h>
 #include <cctype>
+#include <limits.h>
 #pragma hdrstop
 
 #include "Unit1.h"
@@ -13,10 +14,6 @@
 #pragma resource "*.dfm"
 using namespace std;
 TForm1 *Form1;
-float first_num=0.0;   //first number
-float second_num=0.0;  //second number
-char user_action=' ';   //mathematical action
-float res=0.0; //result
 String full = ""; //full expression
 //---------------------------------------------------------------------------
 __fastcall TForm1::TForm1(TComponent* Owner)
@@ -26,12 +23,6 @@ __fastcall TForm1::TForm1(TComponent* Owner)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::number_click(TObject *Sender)
 {	TButton *button = dynamic_cast<TButton*>(Sender);
-	if (Label1->Caption=="0") {
-		Label1->Caption=button->Caption;
-	}
-	else {
-        Label1->Caption+=button->Caption;
-	}
 	full += button->Caption;
 	Label1->Caption = full;
 }
@@ -61,12 +52,7 @@ void __fastcall TForm1::btn_sumClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::math_action(char action)
-{if (user_action != ' ') {
-		full = full.SubString(1, full.Length() - 1);
-	}
-	first_num = StrToFloat(Label1->Caption);
-	user_action = action;
-	full += action;
+{	full += action;
 	Label1->Caption = full;
 }
 
@@ -83,7 +69,7 @@ void __fastcall TForm1::btn_equalClick(TObject *Sender)
     full += "=";
     Label1->Caption = full;
     int lastCh = full.Length();
-
+    bool flag=false;
     float val = 0.0, val_tmp = 0.0;
     int step = 0;
     float S = 0, P = 1;
@@ -92,12 +78,12 @@ void __fastcall TForm1::btn_equalClick(TObject *Sender)
     bool pl_min = true; // +;
     bool mul_div = true; // *;
     bool in_min_function = false; // Флаг для MIN функции
-    float min_value = FLT_MAX;
+	float min_value = INT_MAX;  //минимальное значение  для функции min
 
-    for (int i = 1; i <= lastCh; i++) {
+for (size_t i = 1; i <= full.Length(); i++) {
         switch (full[i]) {
-            case '0': { val = val * 10 + 0; step++; sn_count = 0; break; }
-            case '1': { val = val * 10 + 1; step++; sn_count = 0; break; }
+			case '0': { val = val * 10 + 0; step++; sn_count = 0; break; }
+			case '1': { val = val * 10 + 1; step++; sn_count = 0; break; }
             case '2': { val = val * 10 + 2; step++; sn_count = 0; break; }
             case '3': { val = val * 10 + 3; step++; sn_count = 0; break; }
             case '4': { val = val * 10 + 4; step++; sn_count = 0; break; }
@@ -120,28 +106,28 @@ void __fastcall TForm1::btn_equalClick(TObject *Sender)
                 break;
             }
 
-            case '+': {
-                sn_count++;
-                if (sn_count > 1) { ShowMessage("2 знака"); i = lastCh; break; }
+			case '+': {
+				sn_count++;
+				if (sn_count > 1) { ShowMessage("2 знака"); i = lastCh; break; }
 
-                if (point_count > 0) { val = val_tmp + val * pow(10, -step); }
-                step = 0; point_count = 0; val_tmp = 0;
-                if (mul_div == true) { P = P * val; }
-                else {
-                    if (abs(val) < 0.0000003) {
-                        ShowMessage("Деление на 0");
-                        i = lastCh;
-                        break;
-                    } else {
-                        P = P / val;
-                    }
-                }
-                val = 0;
-                if (pl_min == true) { S = S + P; }
-                else { S = S - P; }
-                pl_min = true; mul_div = true; P = 1;
-                break;
-            }
+				if (point_count > 0) { val = val_tmp + val * pow(10, -step); }
+				step = 0; point_count = 0; val_tmp = 0;
+				if (mul_div == true) { P = P * val; }
+				else {
+					if (abs(val) < 0.0000003) {
+						ShowMessage("Деление на 0");
+						i = lastCh;
+						break;
+					} else {
+						P = P / val;
+					}
+				}
+				val = 0;
+				if (pl_min == true) { S = S + P; }
+				else { S = S - P; }
+				pl_min = true; mul_div = true; P = 1;
+				break;
+			}
 
             case '-': {
                 sn_count++;
@@ -210,8 +196,9 @@ void __fastcall TForm1::btn_equalClick(TObject *Sender)
 
             case 'M': { // Начало функции MIN
                 if (full.SubString(i, 3) == "MIN") {
-                    in_min_function = true;
-                    i += 2; // Пропускаем 'I' и 'N'
+					in_min_function = true;
+					flag=true;//флаг для первого аргумента функции
+					i += 2; // Пропускаем 'I' и 'N'
                     continue;
                 }
                 break;
@@ -219,15 +206,52 @@ void __fastcall TForm1::btn_equalClick(TObject *Sender)
 
             case ';': { // Конец аргумента MIN
                 if (in_min_function) {
-                    if (val < min_value) {
-                        min_value = val; // Обновляем минимальное значение
-                    }
+                    if (point_count > 0) {
+						val = val_tmp + val * pow(10, -step);
+						step = 0;
+						point_count = 0;
+						val_tmp = 0;
+					}
+					if (flag) {
+						min_value = val;
+						flag = false;
+					} else {
+						if (val < min_value) {
+							min_value = val; // Обновляем минимальное значение
+						}
+					}
                     val = 0; // Сбрасываем val для следующего аргумента
                     step = 0; // Сбрасываем шаг
                     point_count = 0; // Сбрасываем счетчик точек
                 }
                 break;
             }
+			case ')': { // Конец функции MIN
+				if (in_min_function) {
+					if (point_count > 0) {
+						val = val_tmp + val * pow(10, -step);
+						step = 0;
+						point_count = 0;
+						val_tmp = 0;
+					}
+					if (flag) {
+						min_value = val;
+						flag = false;
+					} else {
+						if (val < min_value) {
+							min_value = val; // Обновляем минимальное значение
+						}
+					}
+					val = 0;
+					step = 0;
+					point_count = 0;
+					in_min_function = false;
+
+					S = min_value;
+					min_value = INT_MAX; // reset min_value
+				}
+				break;
+			}
 
             case '=': {
                 if (in_min_function) {
@@ -239,31 +263,36 @@ void __fastcall TForm1::btn_equalClick(TObject *Sender)
                     return; // Выходим из функции
                 }
 
-                if (point_count > 0) { val = val_tmp + val * pow(10, -step); }
-                step = 0; point_count = 0; val_tmp = 0;
-                if (mul_div == true) { P = P * val; }
+				if (point_count > 0) {
+					val = val_tmp + val * pow(10, -step);
+					step = 0;
+					point_count = 0;
+					val_tmp = 0;
+				}
+				if (mul_div == true) { P = P * val; }
                 else {
-                    if (abs(val) < 0.0000003) {
+                    if (abs(val) < 0.0) {
                         ShowMessage("Деление на 0");
-                        i = lastCh;
+                        full = full.SubString(1, full.Length() - 1);
+						Label1->Caption = full;
                         break;
                     } else {
                         P = P / val;
                     }
                 }
                 val = 0;
-                if (pl_min == true) { S = S + P; }
-                else { S = S - P; }
-                pl_min = true; mul_div = true; P = 1;
+				if (pl_min == true) {
+				S = S + P;
+				}
+				else {
+				S = S - P;
+				}
+				pl_min = true;
+				mul_div = true;
+				P = 1;
                 i = lastCh; // Завершаем цикл
                 break;
-            }
-
-            default: {
-                ShowMessage("Символ!!!");
-                i = lastCh;
-                break;
-            }
+			}
         }
     }
 
@@ -276,16 +305,11 @@ void __fastcall TForm1::btn_equalClick(TObject *Sender)
     Label1->Caption = full; // Обновляем отображение
 }
 
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::btn_delete_allClick(TObject *Sender)
 {
 //delete all
 	Label1->Caption="0";
-	first_num=0.0;
-	second_num=0.0;
-	user_action=' ';
-	res=0.0;
     full = "";
 }
 //---------------------------------------------------------------------------
