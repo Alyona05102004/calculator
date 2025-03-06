@@ -219,7 +219,7 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
     TabOrder = 12
-    OnClick = btn_sumClick
+    OnClick = number_click
   end
   object btn_sub: TButton
     Left = 229
@@ -234,7 +234,7 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
     TabOrder = 13
-    OnClick = btn_subClick
+    OnClick = number_click
   end
   object btn_umnoj: TButton
     Left = 229
@@ -249,7 +249,7 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
     TabOrder = 14
-    OnClick = btn_umnojClick
+    OnClick = number_click
   end
   object btn_del: TButton
     Left = 158
@@ -264,7 +264,7 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
     TabOrder = 15
-    OnClick = btn_delClick
+    OnClick = number_click
   end
   object btn_backspace: TButton
     Left = 229

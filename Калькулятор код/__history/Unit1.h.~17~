@@ -30,9 +30,17 @@ __published:	// IDE-managed Components
 	TButton *btn_del;
 	TButton *btn_backspace;
 	TButton *btn_min;
+	TButton *btn_delete_all;
 	void __fastcall number_click(TObject *Sender);
-	void __fastcall btn_delClick(TObject *Sender);
-	void __fastcall btn_umnojClick(TObject *Sender);
+	//void __fastcall btn_delClick(TObject *Sender);
+	//void __fastcall btn_umnojClick(TObject *Sender);
+	//void __fastcall btn_subClick(TObject *Sender);
+	//void __fastcall btn_sumClick(TObject *Sender);
+	//void __fastcall math_action(char action);
+	void __fastcall btn_equalClick(TObject *Sender);
+	void __fastcall btn_delete_allClick(TObject *Sender);
+	void __fastcall btn_backspaceClick(TObject *Sender);
+	void __fastcall btn_minClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TForm1(TComponent* Owner);
